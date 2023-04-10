@@ -1,4 +1,5 @@
 const http=require('http');
+const gfName = require('./function');
 
 //console.log(http)
 
@@ -17,6 +18,9 @@ const server=http.createServer((req,res)=>{
     if(req.url==='/about'){
         res.end('Here is our short history')
     }
+    else{
+        res.end(`${gfName} is not here`)
+    }    
     
 })
 
