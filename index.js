@@ -1,6 +1,6 @@
-const http=require('http');
-const gfName = require('./function');
-
+import http from 'http'
+import  gfName,{generateRandom} from './function.js'
+import fs from 'fs'
 //console.log(http)
 
 // http.createServer((req,res)=>{
@@ -11,12 +11,13 @@ const gfName = require('./function');
 // }
 // )
 
+console.log(generateRandom())
 const server=http.createServer((req,res)=>{
     if(req.url==='/'){
-        res.end('Welcome to our home page')
+        res.end(`<h1> The rondom number is ${generateRandom()} </h1>`)
     }
-    if(req.url==='/about'){
-        res.end('Here is our short history')
+    else if(req.url==='/about'){
+        res.end(fs.readFileSync('index.html'))
     }
     else{
         res.end(`${gfName} is not here`)

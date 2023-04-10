@@ -1,3 +1,7 @@
 const gfName="Sara"
 
-module.exports=gfName
+export default gfName
+
+export const generateRandom=()=>{
+    return Math.floor(Math.random()*1000)
+}
