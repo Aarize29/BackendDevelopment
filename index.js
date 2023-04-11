@@ -39,13 +39,47 @@ import fs from "fs"
 import path from "path"
 const app=express()
 
-app.get('/',(req,res)=>{
-   const pathloc=path.resolve()
+// app.get('/',(req,res)=>{
+//    const pathloc=path.resolve()
 
-   res.sendFile(path.join(pathloc,'index.html'))
+//    res.sendFile(path.join(pathloc,'index.html'))
+// })
+// app.get('/about',(req,res)=>{
+//     res.send("About Page")
+// })
+
+
+
+//Using the middleware to access the static files
+app.use(express.static(path.join(path.resolve(),'public')))
+//Using the middleware to parse the data from the form
+app.use(express.urlencoded({extended:true}))
+
+
+//setting up the view engine
+app.set("view engine","ejs")
+
+app.get('/',(req,res)=>{
+    res.render('index',{title:"Home Page"})
 })
-app.get('/about',(req,res)=>{
-    res.send("About Page")
+
+app.get('/success',(req,res)=>{
+    res.render("success")
+})
+const user=[];
+
+app.get("/users",(req,res)=>{
+
+    res.json({
+        user
+    })
+})
+app.post('/contact',(req,res)=>{
+    console.log(req.body)
+    user.push({name:req.body.name,email:req.body.email})
+
+    //res.render("success")
+    res.redirect('/success') 
 })
 
 app.listen(5000,()=>{
