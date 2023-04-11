@@ -74,13 +74,44 @@ app.get("/users",(req,res)=>{
         user
     })
 })
-app.post('/contact',(req,res)=>{
-    console.log(req.body)
-    user.push({name:req.body.name,email:req.body.email})
-
-    //res.render("success")
+app.post('/contact',async(req,res)=>{
+    // console.log(req.body)
+    // user.push({name:req.body.name,email:req.body.email})
+    const {name,email}=req.body;
+    await model.create({name,email})
     res.redirect('/success') 
 })
+
+
+
+
+//MongoDB
+import mongoose from "mongoose"
+
+mongoose.connect('mongodb://127.0.0.1:27017',{dbName:"backend",}).then
+(()=>{
+    console.log("Connected to the database")
+}).catch((e)=>{
+    console.log(e)
+})
+
+const messageSchema=new mongoose.Schema({
+    name:String,
+    email:String,
+})
+
+const model=mongoose.model('user' ,messageSchema)
+
+// app.get('/add',async(req,res)=>{
+//     await model.create(user)
+//     res.send("Data added")
+    
+// })
+
+
+
+
+
 
 app.listen(5000,()=>{
     console.log("Server is listening ")
