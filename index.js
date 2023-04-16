@@ -37,6 +37,7 @@
 import express from "express"
 import fs from "fs"
 import path from "path"
+import cookieParser from "cookie-parser"
 const app=express()
 
 // app.get('/',(req,res)=>{
@@ -55,13 +56,34 @@ app.use(express.static(path.join(path.resolve(),'public')))
 //Using the middleware to parse the data from the form
 app.use(express.urlencoded({extended:true}))
 
+app.use(cookieParser())
+
 
 //setting up the view engine
 app.set("view engine","ejs")
 
 app.get('/',(req,res)=>{
-    res.render('index',{title:"Home Page"})
+
+    const {token}=req.cookies
+    if(token){
+        res.render('logout')
+    }
+    else{
+        res.render('login')
+    }
+    
+    res.render('login')
 })
+
+app.post('/login',(req,res)=>{
+    res.cookie('token',"iamin")
+    res.redirect('/')
+})
+app.get('/logout',(req,res)=>{
+    res.clearCookie('token')
+    res.redirect('/')
+})
+
 
 app.get('/success',(req,res)=>{
     res.render("success")
