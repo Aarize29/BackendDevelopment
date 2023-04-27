@@ -35,9 +35,10 @@
 
 
 import express from "express"
-import fs from "fs"
 import path from "path"
 import cookieParser from "cookie-parser"
+import jwt from "jsonwebtoken"
+import bcrypt from "bcrypt"
 const app=express()
 
 // app.get('/',(req,res)=>{
@@ -62,50 +63,87 @@ app.use(cookieParser())
 //setting up the view engine
 app.set("view engine","ejs")
 
-app.get('/',(req,res)=>{
-
+const isAuthenticated=async(req,res,next)=>{
     const {token}=req.cookies
     if(token){
-        res.render('logout')
+
+       const decoded= jwt.verify(token,"secret")
+        //console.log(decoded)
+        req.user=await User.findById(decoded.id)
+
+
+        next()
     }
     else{
-        res.render('login')
+        res.redirect('/login')
     }
-    
-    res.render('login')
+}
+
+app.get('/',isAuthenticated,(req,res)=>{
+    //console.log(req.user)
+    res.render('logout',{name:req.user.name,email:req.user.email})
+})
+app.get('/register',(req,res)=>{
+    res.render('register')
 })
 
-app.post('/login',(req,res)=>{
-    res.cookie('token',"iamin")
+app.post('/register',async (req,res)=>{
+    
+   let user=await User.findOne({email:req.body.email})
+    if(user){
+        
+        // return console.log("User not found")
+        return res.redirect('/login')
+    } 
+
+    const hashedPassword=await bcrypt.hash(req.body.password,10)
+    user=await User.create({
+        name:req.body.name,
+        email:req.body.email,
+        password:hashedPassword
+    })
+
+    const token=jwt.sign({id:user._id},"secret")
+
+    res.cookie('token',token,{
+        httpOnly:true,
+        expires:new Date(Date.now()+1000*60)
+    })
+    res.redirect('/')
+})
+ 
+app.get('/login',(req,res)=>{
+    res.render('login')
+})
+app.post('/login',async(req,res)=>{
+
+    const {email,password}=req.body;
+    let user=await User.findOne({email})
+
+    if(!user){
+        return res.redirect("/register")
+    }
+    
+    const isMatch = await bcrypt.compare(password,user.password)
+    if(!isMatch){
+        return res.render("login",{email,message:"Invalid Credentials"})
+    }
+    
+    const token=jwt.sign({id:user._id},"secret")
+
+    res.cookie('token',token,{
+        httpOnly:true,
+        expires:new Date(Date.now()+1000*60)
+    })
     res.redirect('/')
 })
 app.get('/logout',(req,res)=>{
-    res.clearCookie('token')
+    res.clearCookie('token',null,{
+        httpOnly:true,
+        expires:new Date(Date.now())
+    })
     res.redirect('/')
 })
-
-
-app.get('/success',(req,res)=>{
-    res.render("success")
-})
-const user=[];
-
-app.get("/users",(req,res)=>{
-
-    res.json({
-        user
-    })
-})
-app.post('/contact',async(req,res)=>{
-    // console.log(req.body)
-    // user.push({name:req.body.name,email:req.body.email})
-    const {name,email}=req.body;
-    await model.create({name,email})
-    res.redirect('/success') 
-})
-
-
-
 
 //MongoDB
 import mongoose from "mongoose"
@@ -117,12 +155,13 @@ mongoose.connect('mongodb://127.0.0.1:27017',{dbName:"backend",}).then
     console.log(e)
 })
 
-const messageSchema=new mongoose.Schema({
+const userSchema=new mongoose.Schema({
     name:String,
     email:String,
+    password:String
 })
 
-const model=mongoose.model('user' ,messageSchema)
+const User=mongoose.model('user' ,userSchema)
 
 // app.get('/add',async(req,res)=>{
 //     await model.create(user)
